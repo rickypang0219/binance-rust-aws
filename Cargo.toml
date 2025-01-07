@@ -26,3 +26,18 @@ rayon = "1.10.0"
 
 [profile.release]
 panic = 'abort'
+
+
+[[bin]]
+name = "bookticker"
+path = "src/bookticker_listener.rs"
+
+
+[[bin]]
+name = "order_update"
+path = "src/order_listener.rs"
+
+
+[[bin]]
+name = "main"
+path = "src/main.rs"

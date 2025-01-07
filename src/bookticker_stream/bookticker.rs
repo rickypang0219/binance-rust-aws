@@ -5,7 +5,7 @@ use std::sync::Arc;
 use tokio::time;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
-use tracing::info;
+use tracing::{error, info};
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct BestPrices {
@@ -97,33 +97,37 @@ impl BookTickerStream {
                     }
                     Ok(Message::Ping(payload)) => {
                         if let Err(e) = write.send(Message::Pong(payload)).await {
-                            info!("Failed to send Pong response: {}", e);
+                            error!("Failed to send Pong response: {}", e);
                         }
                     }
-                    Ok(non_text_message) => {
-                        info!("Received Non Text Messages {:?}", non_text_message)
+                    Ok(Message::Close(close)) => {
+                        info!("Receive Close frame, retry immediately {:?}", close);
+                        break;
+                    }
+                    Ok(Message::Binary(binary_data)) => {
+                        info!("Received Binary data {:?}", binary_data);
+                    }
+                    Ok(Message::Pong(pong)) => {
+                        info!("Pong received {:?}", pong);
+                    }
+                    Ok(Message::Frame(frame)) => {
+                        info!("Frame received {:?}", frame)
                     }
                     Err(e) => {
-                        info!("Error Message {}", e);
+                        error!("Error Message {}", e);
                         break;
                     }
                 }
             }
-            info!("Book Ticker Connection lost, retrying immediately...");
-            continue;
+            error!("Book Ticker Connection lost, retrying immediately...");
         }
     }
 
-    pub async fn listen_all_coins_bookticker(
-        &self,
-        names: Vec<String>,
-        parition: usize,
-    ) -> Result<(), Box<dyn std::error::Error + Send>> {
+    pub async fn listen_all_coins_bookticker(&self, names: Vec<String>, parition: usize) {
         let urls = generate_bookticker_url_in_n_pieces(names, parition);
         let mut tasks = vec![];
         for url in urls {
             let self_clone = self.clone();
-            // let book_ticker_clone = Arc::clone(&self.book_ticker);
             tasks.push(tokio::spawn(async move {
                 if let Err(e) = self_clone.listen_one_coin_bookticker(&url).await {
                     info!(
@@ -136,7 +140,6 @@ impl BookTickerStream {
         for task in tasks {
             let _ = task.await;
         }
-        Ok(())
     }
 
     pub async fn show_bookticker(&self) {
