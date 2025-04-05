@@ -104,4 +104,8 @@ pub enum Filters {
         multiplier_down: String,
         multiplier_decimal: String,
     },
+
+    #[serde(rename = "POSITION_RISK_CONTROL")]
+    #[serde(rename_all = "camelCase")]
+    PositionRiskControl { position_control_side: String },
 }
