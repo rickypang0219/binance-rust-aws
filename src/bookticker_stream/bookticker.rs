@@ -1,4 +1,3 @@
-use bytes::Bytes;
 use futures::{SinkExt, StreamExt};
 use serde::Deserialize;
 use std::collections::HashMap;
@@ -80,9 +79,8 @@ impl BookTickerStream {
             while let Some(message) = read.next().await {
                 match message {
                     Ok(Message::Text(text)) => {
-                        let bytes = Bytes::from(text.clone());
                         let ticker: StreamBookTicker =
-                            serde_json::from_slice(&bytes).expect("JSON was not well format!");
+                            serde_json::from_str(&text).expect("JSON was not well format!");
                         let bid: f64 = ticker
                             .data
                             .best_bid
