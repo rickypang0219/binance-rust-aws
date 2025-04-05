@@ -43,9 +43,10 @@ pub struct BookTicker {
 
 #[derive(Debug, Clone)]
 pub struct BookTickerStream {
-    pub book_ticker: Arc<tokio::sync::Mutex<HashMap<String, BestPrices>>>,
+    pub book_ticker: Arc<std::sync::Mutex<HashMap<String, BestPrices>>>,
 }
 
+// Default trait
 impl Default for BookTickerStream {
     fn default() -> Self {
         Self::new()
@@ -55,7 +56,7 @@ impl Default for BookTickerStream {
 impl BookTickerStream {
     pub fn new() -> Self {
         BookTickerStream {
-            book_ticker: Arc::new(tokio::sync::Mutex::new(HashMap::new())),
+            book_ticker: Arc::new(std::sync::Mutex::new(HashMap::new())),
         }
     }
 
@@ -70,7 +71,7 @@ impl BookTickerStream {
                     stream
                 }
                 Err(e) => {
-                    info!("Failed to connect: {}, retrying...", e);
+                    error!("Failed to connect: {}, retrying...", e);
                     continue; // Retry immediately without delay
                 }
             };
@@ -80,7 +81,6 @@ impl BookTickerStream {
                     Ok(Message::Text(text)) => {
                         let ticker: StreamBookTicker =
                             serde_json::from_str(&text).expect("JSON was not well format!");
-
                         let bid: f64 = ticker
                             .data
                             .best_bid
@@ -92,7 +92,7 @@ impl BookTickerStream {
                             .parse::<f64>()
                             .expect("Failed to parse as f64");
 
-                        let mut book_ticker = self.book_ticker.lock().await;
+                        let mut book_ticker = self.book_ticker.lock().unwrap();
                         book_ticker.insert(ticker.data.symbol.clone(), BestPrices { bid, ask });
                     }
                     Ok(Message::Ping(payload)) => {
@@ -125,6 +125,9 @@ impl BookTickerStream {
 
     pub async fn listen_all_coins_bookticker(&self, names: Vec<String>, parition: usize) {
         let urls = generate_bookticker_url_in_n_pieces(names, parition);
+        // for url in &urls {
+        //     println!("Url {:?} \n", &url);
+        // }
         let mut tasks = vec![];
         for url in urls {
             let self_clone = self.clone();
@@ -138,18 +141,35 @@ impl BookTickerStream {
             }))
         }
         for task in tasks {
-            let _ = task.await;
+            task.await.unwrap();
         }
     }
 
     pub async fn show_bookticker(&self) {
         loop {
             time::sleep(time::Duration::new(1800, 0)).await;
-            let book_ticker = self.book_ticker.lock().await;
+            let book_ticker = self.book_ticker.lock().unwrap();
             info!("Current Book Ticker:");
             for (symbol, prices) in book_ticker.iter() {
                 info!("{}: Bid: {}, Ask: {}", symbol, prices.bid, prices.ask);
             }
+        }
+    }
+
+    pub async fn show_btc_only(&self) {
+        loop {
+            time::sleep(time::Duration::new(300, 0)).await;
+            let book_ticker = self.book_ticker.lock().unwrap();
+
+            book_ticker
+                .iter()
+                .filter(|&(symbol, _)| symbol == &"BTCUSDT")
+                .for_each(|(_, prices)| {
+                    info!(
+                        "Special notice for BTCUSDT: Bid: {}, Ask: {}",
+                        prices.bid, prices.ask
+                    );
+                });
         }
     }
 }

@@ -508,6 +508,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "binance-rust-aws"
+version = "0.1.0"
+dependencies = [
+ "aws-config",
+ "aws-sdk-dynamodb",
+ "aws-sdk-ssm",
+ "aws-types 0.12.0",
+ "futures",
+ "hex",
+ "hmac",
+ "rayon",
+ "reqwest",
+ "ring",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror 2.0.8",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+ "tracing-subscriber",
+]
+
+[[package]]
 name = "bitflags"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -660,30 +684,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "dynamo-rust"
-version = "0.1.0"
-dependencies = [
- "aws-config",
- "aws-sdk-dynamodb",
- "aws-sdk-ssm",
- "aws-types 0.12.0",
- "futures",
- "hex",
- "hmac",
- "rayon",
- "reqwest",
- "ring",
- "serde",
- "serde_json",
- "sha2",
- "thiserror 2.0.8",
- "tokio",
- "tokio-tungstenite",
- "tracing",
- "tracing-subscriber",
 ]
 
 [[package]]

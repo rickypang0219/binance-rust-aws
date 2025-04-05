@@ -2,7 +2,7 @@ use crate::order_stream::messages::UserDataUpdate;
 use futures::{SinkExt, StreamExt};
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
-use tracing::info;
+use tracing::{error, info};
 
 #[derive(Clone, Debug)]
 pub struct UserDataStream {
@@ -19,7 +19,7 @@ impl UserDataStream {
                     stream
                 }
                 Err(e) => {
-                    info!("Failed to connect: {}, retrying...", e);
+                    error!("Failed to connect: {}, retrying...", e);
                     continue;
                 }
             };
@@ -31,23 +31,28 @@ impl UserDataStream {
                     }
                     Ok(Message::Ping(payload)) => {
                         if let Err(e) = write.send(Message::Pong(payload)).await {
-                            info!("Failed to send Pong response: {}", e);
+                            error!("Failed to send Pong response: {}", e);
                         }
                     }
                     Ok(Message::Binary(binary)) => {
                         info!("{:?}", &binary);
                     }
+                    Ok(Message::Close(close_frame)) => {
+                        info!(
+                            "Close Frame received {:?}, retrying immediately",
+                            close_frame
+                        );
+                    }
                     Ok(non_text_message) => {
                         info!("Received Non-Text Message: {:?}", non_text_message);
                     }
                     Err(e) => {
-                        info!("Error Message: {}", e);
+                        error!("Error Message: {}", e);
                         break;
                     }
                 }
             }
-            info!("Use Data Connection lost, retrying immediately...");
-            continue;
+            error!("User Data Connection lost, retrying immediately...");
         }
     }
     async fn handle_user_data_update(&self, text: &str) {
