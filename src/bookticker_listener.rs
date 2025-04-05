@@ -6,7 +6,7 @@ use tracing_subscriber;
 pub mod async_binance;
 use async_binance::client_async::AsyncBinanceClient;
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
     let bookticker_partition: usize = 4;

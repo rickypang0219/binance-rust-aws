@@ -9,7 +9,7 @@ use aws_resources::clients::get_ssm_client;
 use aws_resources::ssm_params::get_param_value;
 use order_stream::order_update::UserDataStream;
 
-#[tokio::main(flavor = "multi_thread", worker_threads = 10)]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().with_max_level(Level::INFO).init();
     let ssm_client = get_ssm_client().await?;
