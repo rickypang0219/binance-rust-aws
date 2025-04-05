@@ -102,21 +102,21 @@ impl BookTickerStream {
                             error!("Failed to send Pong response: {}", e);
                         }
                     }
-                    Ok(Message::Binary(binary)) => {
-                        let ticker: StreamBookTicker =
-                            serde_json::from_slice(binary.to_vec().as_slice())
-                                .expect("Failed to deserialize from binary");
-                        info!("{:?}", ticker);
-                    }
                     Ok(Message::Close(close)) => {
-                        info!("Close Message Received {:?}, retry connection", close);
+                        info!("Receive Close frame, retry immediately {:?}", close);
                         break;
                     }
-                    Ok(non_text_message) => {
-                        info!("Received Non Text Messages {:?}", non_text_message)
+                    Ok(Message::Binary(binary_data)) => {
+                        info!("Received Binary data {:?}", binary_data);
+                    }
+                    Ok(Message::Pong(pong)) => {
+                        info!("Pong received {:?}", pong);
+                    }
+                    Ok(Message::Frame(frame)) => {
+                        info!("Frame received {:?}", frame)
                     }
                     Err(e) => {
-                        error!("Error Message {} Url {}", e, url);
+                        error!("Error Message {}", e);
                         break;
                     }
                 }
@@ -125,11 +125,7 @@ impl BookTickerStream {
         }
     }
 
-    pub async fn listen_all_coins_bookticker(
-        &self,
-        names: Vec<String>,
-        parition: usize,
-    ) -> Result<(), Box<dyn std::error::Error + Send>> {
+    pub async fn listen_all_coins_bookticker(&self, names: Vec<String>, parition: usize) {
         let urls = generate_bookticker_url_in_n_pieces(names, parition);
         // for url in &urls {
         //     println!("Url {:?} \n", &url);
@@ -137,7 +133,6 @@ impl BookTickerStream {
         let mut tasks = vec![];
         for url in urls {
             let self_clone = self.clone();
-            // let book_ticker_clone = Arc::clone(&self.book_ticker);
             tasks.push(tokio::spawn(async move {
                 if let Err(e) = self_clone.listen_one_coin_bookticker(&url).await {
                     info!(
@@ -150,7 +145,6 @@ impl BookTickerStream {
         for task in tasks {
             task.await.unwrap();
         }
-        Ok(())
     }
 
     pub async fn show_bookticker(&self) {
