@@ -1,0 +1,28 @@
+services:
+  bookticker:
+    build:
+      context: .
+      dockerfile: Dockerfile.bookticker
+    container_name: bookticker
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+      - AWS_REGION=ap-northeast-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
+      - AWS_PROFILE=${AWS_PROFILE}
+
+  order_update:
+    build:
+      context: .
+      dockerfile: Dockerfile.order_update
+    container_name: order_update
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+      - AWS_REGION=ap-northeast-1
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID}
+      - AWS_PROFILE=${AWS_PROFILE}
