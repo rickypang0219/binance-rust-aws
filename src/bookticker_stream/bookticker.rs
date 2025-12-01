@@ -126,9 +126,6 @@ impl BookTickerStream {
 
     pub async fn listen_all_coins_bookticker(&self, names: Vec<String>, parition: usize) {
         let urls = generate_bookticker_url_in_n_pieces(names, parition);
-        for url in &urls {
-            println!("Url {:?} \n", &url);
-        }
         let mut tasks = vec![];
         for url in urls {
             let self_clone = self.clone();
