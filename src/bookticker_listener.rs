@@ -16,10 +16,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "https://fapi.binance.com/fapi/v1/".to_string(),
         Some(30),
     );
+
     let coins_name = binance_future_client.get_available_coins_name().await;
     let bookticker_stream = BookTickerStream::new();
-    bookticker_stream
-        .listen_all_coins_bookticker(coins_name, bookticker_partition)
-        .await;
+    tokio::join!(
+        bookticker_stream.listen_all_coins_bookticker(coins_name, bookticker_partition),
+        bookticker_stream.show_btc_only()
+    );
     Ok(())
 }

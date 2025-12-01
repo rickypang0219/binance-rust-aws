@@ -6,6 +6,7 @@ use tokio::time;
 use tokio_tungstenite::connect_async;
 use tokio_tungstenite::tungstenite::Message;
 use tracing::{error, info};
+use urlencoding::encode;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct BestPrices {
@@ -125,9 +126,9 @@ impl BookTickerStream {
 
     pub async fn listen_all_coins_bookticker(&self, names: Vec<String>, parition: usize) {
         let urls = generate_bookticker_url_in_n_pieces(names, parition);
-        // for url in &urls {
-        //     println!("Url {:?} \n", &url);
-        // }
+        for url in &urls {
+            println!("Url {:?} \n", &url);
+        }
         let mut tasks = vec![];
         for url in urls {
             let self_clone = self.clone();
@@ -158,7 +159,7 @@ impl BookTickerStream {
 
     pub async fn show_btc_only(&self) {
         loop {
-            time::sleep(time::Duration::new(300, 0)).await;
+            time::sleep(time::Duration::new(5, 0)).await;
             let book_ticker = self.book_ticker.lock().unwrap();
 
             book_ticker
@@ -177,7 +178,11 @@ impl BookTickerStream {
 fn create_websocket_url(coin_names: &[String]) -> String {
     let streams: Vec<String> = coin_names
         .iter()
-        .map(|coin| format!("{}@bookTicker", coin.to_lowercase()))
+        .map(|coin| {
+            let binding = coin.to_lowercase();
+            let encoded_coin = encode(&binding);
+            format!("{}@bookTicker", encoded_coin)
+        })
         .collect();
     format!(
         "wss://fstream.binance.com/stream?streams={}",
@@ -199,6 +204,5 @@ fn generate_bookticker_url_in_n_pieces(coin_names: Vec<String>, n: usize) -> Vec
         urls.push(create_websocket_url(piece.to_vec().as_slice()));
         start = end; // Update the start index for the next piece
     }
-
     urls
 }
